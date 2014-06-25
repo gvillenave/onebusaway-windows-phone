@@ -17,6 +17,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Device.Location;
 using System.Threading;
+using System.Windows;
+using Windows.Devices.Geolocation;
 using Microsoft.Devices;
 using OneBusAway.WP7.ViewModel.EventArgs;
 using System.Diagnostics;
@@ -28,13 +30,16 @@ namespace OneBusAway.WP7.ViewModel
     internal static class LocationTrackerStatic
     {
         private static GeoCoordinateWatcher locationWatcher;
+        private static Geolocator geoLocator;
+
+        private static GeoPositionStatus status = GeoPositionStatus.Initializing;
 
         public static GeoCoordinate LastKnownLocation { get; set; }
         public static GeoPositionStatus LocationStatus
         {
             get
             {
-                return locationWatcher.Status;
+                return status;
             }
         }
 
@@ -45,21 +50,93 @@ namespace OneBusAway.WP7.ViewModel
         {
             LastKnownLocation = null;
 
-            locationWatcher = new GeoCoordinateWatcher(GeoPositionAccuracy.High);
-            locationWatcher.MovementThreshold = 5; // 5 meters
-            locationWatcher.PositionChanged += new EventHandler<GeoPositionChangedEventArgs<GeoCoordinate>>(LocationWatcher_PositionChanged);
-            locationWatcher.StatusChanged += new EventHandler<GeoPositionStatusChangedEventArgs>(locationWatcher_StatusChanged);
-
             // Only start the location service if location is enabled
             if (IsolatedStorageSettings.ApplicationSettings.Contains("UseLocation") == false
                 || (bool)IsolatedStorageSettings.ApplicationSettings["UseLocation"] == true)
             {
-                locationWatcher.Start();
+
+                geoLocator = new Geolocator {DesiredAccuracy = PositionAccuracy.High, MovementThreshold = 20};
+                geoLocator.PositionChanged += GeoLocator_PositionChanged;
+                geoLocator.StatusChanged += GeoLocator_StatusChanged;
+
+                GetLastestLocation(geoLocator);
+
+                //locationWatcher = new GeoCoordinateWatcher(GeoPositionAccuracy.High);
+                //locationWatcher.MovementThreshold = 5; // 5 meters
+                //locationWatcher.PositionChanged += new EventHandler<GeoPositionChangedEventArgs<GeoCoordinate>>(LocationWatcher_PositionChanged);
+                //locationWatcher.StatusChanged += new EventHandler<GeoPositionStatusChangedEventArgs>(locationWatcher_StatusChanged);
+
+            
+                ////locationWatcher.Position;
+                //locationWatcher.Start();
             }
+        }
+
+        private static void GeoLocator_StatusChanged(Geolocator sender, StatusChangedEventArgs args)
+        {
+            locationWatcher_StatusChanged(sender, Convert(args));
+        }
+
+        private static GeoPositionStatusChangedEventArgs Convert(StatusChangedEventArgs args)
+        {
+            return new GeoPositionStatusChangedEventArgs(Convert(args.Status));
+        }
+
+        private static GeoPositionStatus Convert(PositionStatus status)
+        {
+            switch (status)
+            {
+                case PositionStatus.Disabled:
+                    return GeoPositionStatus.Disabled;
+                case PositionStatus.Initializing:
+                    return GeoPositionStatus.Initializing;
+                case PositionStatus.NoData:
+                case PositionStatus.NotAvailable:
+                case PositionStatus.NotInitialized:
+                    return GeoPositionStatus.NoData;
+                case PositionStatus.Ready:
+                    return GeoPositionStatus.Ready;
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        private static void GeoLocator_PositionChanged(Geolocator sender, PositionChangedEventArgs args)
+        {
+            LocationWatcher_PositionChanged(sender, Convert(args));
+        }
+
+        private async static void GetLastestLocation(Geolocator locator)
+        {
+            var position = await locator.GetGeopositionAsync(TimeSpan.FromMinutes(30), TimeSpan.FromMilliseconds(100));
+
+            LocationWatcher_PositionChanged(null, new GeoPositionChangedEventArgs<GeoCoordinate>(new GeoPosition<GeoCoordinate>(position.Coordinate.Timestamp, Convert(position.Coordinate))));
+        }
+
+        private static GeoPositionChangedEventArgs<GeoCoordinate> Convert(PositionChangedEventArgs args)
+        {
+            return
+                new GeoPositionChangedEventArgs<GeoCoordinate>(
+                    new GeoPosition<GeoCoordinate>(args.Position.Coordinate.Timestamp, Convert(args.Position.Coordinate)));
+        }
+
+        private static GeoCoordinate Convert(Geocoordinate coordinate)
+        {
+            return new GeoCoordinate()
+            {
+                Altitude = (double) coordinate.Altitude,
+                HorizontalAccuracy = coordinate.Accuracy,
+                Latitude = coordinate.Latitude,
+                Longitude = coordinate.Longitude,
+                Speed = (double) coordinate.Speed,
+                VerticalAccuracy = (double) coordinate.AltitudeAccuracy,
+            };
         }
 
         static void locationWatcher_StatusChanged(object sender, GeoPositionStatusChangedEventArgs e)
         {
+            status = e.Status;
+
             if (StatusChanged != null)
             {
                 StatusChanged(sender, e);
@@ -73,7 +150,7 @@ namespace OneBusAway.WP7.ViewModel
             // location must be less than 5 minute old.
             if (e.Position.Location.IsUnknown == false)
             {
-                if ((DateTime.Now - e.Position.Timestamp.DateTime) < new TimeSpan(0, 5, 0))
+                //if ((DateTime.Now - e.Position.Timestamp.DateTime) < new TimeSpan(0, 5, 0))
                 {
                     LastKnownLocation = e.Position.Location;
                 }
@@ -312,6 +389,8 @@ namespace OneBusAway.WP7.ViewModel
 
                     // Remove this handler now that the location is known
                     LocationTrackerStatic.PositionChanged -= new EventHandler<GeoPositionChangedEventArgs<GeoCoordinate>>(LocationWatcher_LocationKnown);
+
+                    RunMethodsRequiringLocation(null);
                 }
             }
         }
