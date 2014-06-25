@@ -30,6 +30,7 @@ namespace OneBusAway.WP7.ViewModel
         private static GeoCoordinateWatcher locationWatcher;
 
         public static GeoCoordinate LastKnownLocation { get; set; }
+
         public static GeoPositionStatus LocationStatus
         {
             get
@@ -46,7 +47,7 @@ namespace OneBusAway.WP7.ViewModel
             LastKnownLocation = null;
 
             locationWatcher = new GeoCoordinateWatcher(GeoPositionAccuracy.High);
-            locationWatcher.MovementThreshold = 5; // 5 meters
+            locationWatcher.MovementThreshold = 20; // 20 meters
             locationWatcher.PositionChanged += new EventHandler<GeoPositionChangedEventArgs<GeoCoordinate>>(LocationWatcher_PositionChanged);
             locationWatcher.StatusChanged += new EventHandler<GeoPositionStatusChangedEventArgs>(locationWatcher_StatusChanged);
 
@@ -55,6 +56,7 @@ namespace OneBusAway.WP7.ViewModel
                 || (bool)IsolatedStorageSettings.ApplicationSettings["UseLocation"] == true)
             {
                 locationWatcher.Start();
+                LastKnownLocation = locationWatcher.Position.Location;
             }
         }
 
@@ -68,15 +70,10 @@ namespace OneBusAway.WP7.ViewModel
 
         private static void LocationWatcher_PositionChanged(object sender, GeoPositionChangedEventArgs<GeoCoordinate> e)
         {
-            // The location service will return the last known location of the phone when it first starts up.  Since
-            // we can't refresh the home screen wait until a recent location value is found before using it.  The
-            // location must be less than 5 minute old.
+            // The location service will return the last known location of the phone when it first starts up.
             if (e.Position.Location.IsUnknown == false)
             {
-                if ((DateTime.Now - e.Position.Timestamp.DateTime) < new TimeSpan(0, 5, 0))
-                {
-                    LastKnownLocation = e.Position.Location;
-                }
+                LastKnownLocation = e.Position.Location;
             }
 
             if (PositionChanged != null)

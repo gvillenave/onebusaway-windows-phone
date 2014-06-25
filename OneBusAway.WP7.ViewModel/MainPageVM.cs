@@ -68,6 +68,8 @@ namespace OneBusAway.WP7.ViewModel
 
         #region Public Properties
 
+        public bool InfoForLocationLoaded = false;
+
         private ObservableCollection<Stop> stopsForLocation;
         public ObservableCollection<Stop> StopsForLocation 
         {
@@ -133,6 +135,8 @@ namespace OneBusAway.WP7.ViewModel
             {
                 busServiceModel.CombinedInfoForLocation(location, defaultSearchRadius, -1, invalidateCache);
             });
+
+            InfoForLocationLoaded = true;
         }
 
         public void LoadFavorites()

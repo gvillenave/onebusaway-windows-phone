@@ -56,6 +56,9 @@ namespace OneBusAway.WP7.View
             InitializeComponent();
             base.Initialize();
 
+            viewModel = aViewModel as MainPageVM;
+            viewModel.RegisterEventHandlers(Dispatcher);
+
             // It is the first launch of the app if this key doesn't exist.  Otherwise we are returning
             // to the main page after tombstoning and showing the splash screen looks bad
             if (PhoneApplicationService.Current.State.ContainsKey("ShowLoadingSplash") == false)
@@ -63,7 +66,6 @@ namespace OneBusAway.WP7.View
                 ShowLoadingSplash();
             }
 
-            viewModel = aViewModel as MainPageVM;
             firstLoad = true;
             navigatedAway = false;
             navigationLock = new Object();
@@ -127,9 +129,6 @@ namespace OneBusAway.WP7.View
 
             if (firstLoad == true)
             {
-                // Since this is the first load, pull down the bus and stop info
-                viewModel.LoadInfoForLocation();
-
                 // In this case, we've been re-created after a tombstone, resume their previous pivot
                 if (PhoneApplicationService.Current.State.ContainsKey("MainPageSelectedPivot") == true)
                 {
@@ -152,10 +151,21 @@ namespace OneBusAway.WP7.View
                     }
                 }
             }
+
+            // If the selected pivot is not Favorites or Recent, load bus and stop info, only 
+            // if it's the first load and the data has not already been loaded
+            if (firstLoad && !viewModel.InfoForLocationLoaded && PC.SelectedIndex < 2)
+            {
+                viewModel.LoadInfoForLocation();
+            }
+
             firstLoad = false;
 
             // Load favorites every time because they might have changed since the last load
-            viewModel.LoadFavorites();
+            if (PC.SelectedIndex >= 2)
+            {
+                viewModel.LoadFavorites();
+            }
 
             viewModel.CheckForLocalTransitData(delegate(bool hasData)
             {
@@ -449,6 +459,16 @@ namespace OneBusAway.WP7.View
 
         private void PC_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (!firstLoad && !viewModel.InfoForLocationLoaded && PC.SelectedIndex < 2)
+            {
+                viewModel.LoadInfoForLocation();
+            }
+
+            if (PC.SelectedIndex >= 2)
+            {
+                viewModel.LoadFavorites();
+            }
+
             //we bind the DataContext only when the pivot is naivgated to. This improves perf if Favs or Recent are the first pivots
             FrameworkElement selectedElement = ((sender as Pivot).SelectedItem as PivotItem).Content as FrameworkElement;
             selectedElement.DataContext = viewModel;
