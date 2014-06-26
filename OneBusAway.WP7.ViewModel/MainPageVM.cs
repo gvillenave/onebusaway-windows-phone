@@ -138,21 +138,24 @@ namespace OneBusAway.WP7.ViewModel
         /// <summary>
         /// Call the OBA webservice to load stops and routes for the current location.
         /// </summary>
-        /// <param name="radiusInMeters"></param>
         /// <param name="invalidateCache">If true, will discard any cached result and requery the server</param>
         public void LoadInfoForLocation(bool invalidateCache)
         {
-            StopsForLocation.Clear();
-            
-            DisplayRouteForLocation.Working.Clear();
-
-            operationTracker.WaitForOperation("CombinedInfoForLocation", "Searching for buses...");
-            locationTracker.RunWhenLocationKnown(delegate(GeoCoordinate location)
+            if (!InfoForLocationLoaded || LocationTrackerStatic.LocationHasChanged)
             {
-                busServiceModel.CombinedInfoForLocation(location, defaultSearchRadius, -1, invalidateCache);
-            });
+                StopsForLocation.Clear();
 
-            InfoForLocationLoaded = true;
+                DisplayRouteForLocation.Working.Clear();
+
+                operationTracker.WaitForOperation("CombinedInfoForLocation", "Searching for buses...");
+                locationTracker.RunWhenLocationKnown(delegate(GeoCoordinate location)
+                {
+                    busServiceModel.CombinedInfoForLocation(location, defaultSearchRadius, -1, invalidateCache);
+                });
+
+                InfoForLocationLoaded = true;
+                LocationTrackerStatic.LocationHasChanged = false;
+            }
         }
 
         public void LoadFavorites()

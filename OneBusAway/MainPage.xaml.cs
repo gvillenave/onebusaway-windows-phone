@@ -60,9 +60,6 @@ namespace OneBusAway.WP7.View
             InitializeComponent();
             base.Initialize();
 
-            viewModel = aViewModel as MainPageVM;
-            viewModel.RegisterEventHandlers(Dispatcher);
-
             // It is the first launch of the app if this key doesn't exist.  Otherwise we are returning
             // to the main page after tombstoning and showing the splash screen looks bad
             if (PhoneApplicationService.Current.State.ContainsKey("ShowLoadingSplash") == false)
@@ -70,6 +67,7 @@ namespace OneBusAway.WP7.View
                 ShowLoadingSplash();
             }
 
+            viewModel = aViewModel as MainPageVM;
             firstLoad = true;
             navigatedAway = false;
             navigationLock = new Object();
@@ -101,7 +99,7 @@ namespace OneBusAway.WP7.View
             this.popup.IsOpen = true;
 
             DispatcherTimer splashTimer = new DispatcherTimer();
-            splashTimer.Interval = new TimeSpan(0, 0, 0, 3, 0); // 5 secs
+            splashTimer.Interval = new TimeSpan(0, 0, 0, 1, 0); // 1 sec
             splashTimer.Tick += new EventHandler(splashTimer_Tick);
             splashTimer.Start();
         }
@@ -158,7 +156,7 @@ namespace OneBusAway.WP7.View
 
             // If the selected pivot is not Favorites or Recent, load bus and stop info, only 
             // if it's the first load and the data has not already been loaded
-            if (firstLoad && !viewModel.InfoForLocationLoaded && PC.SelectedIndex < 2)
+            if (firstLoad && PC.SelectedIndex < 2)
             {
                 viewModel.LoadInfoForLocation();
             }
@@ -567,7 +565,7 @@ namespace OneBusAway.WP7.View
 
         private void PC_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!firstLoad && !viewModel.InfoForLocationLoaded && PC.SelectedIndex < 2)
+            if (!firstLoad && PC.SelectedIndex < 2)
             {
                 viewModel.LoadInfoForLocation();
             }

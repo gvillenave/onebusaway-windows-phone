@@ -31,6 +31,8 @@ namespace OneBusAway.WP7.ViewModel
 
         public static GeoCoordinate LastKnownLocation { get; set; }
 
+        public static bool LocationHasChanged = false;
+
         public static GeoPositionStatus LocationStatus
         {
             get
@@ -47,7 +49,7 @@ namespace OneBusAway.WP7.ViewModel
             LastKnownLocation = null;
 
             locationWatcher = new GeoCoordinateWatcher(GeoPositionAccuracy.High);
-            locationWatcher.MovementThreshold = 20; // 20 meters
+            locationWatcher.MovementThreshold = 10; // 10 meters
             locationWatcher.PositionChanged += new EventHandler<GeoPositionChangedEventArgs<GeoCoordinate>>(LocationWatcher_PositionChanged);
             locationWatcher.StatusChanged += new EventHandler<GeoPositionStatusChangedEventArgs>(locationWatcher_StatusChanged);
 
@@ -74,6 +76,7 @@ namespace OneBusAway.WP7.ViewModel
             if (e.Position.Location.IsUnknown == false)
             {
                 LastKnownLocation = e.Position.Location;
+                LocationHasChanged = true;
             }
 
             if (PositionChanged != null)

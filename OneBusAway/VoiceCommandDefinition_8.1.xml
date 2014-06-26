@@ -74,7 +74,7 @@
             <ListenFor> stop {stop} </ListenFor>
 
           <!--Feedback provides the displayed and spoken text when your command is triggered -->
-            <Feedback> Opening stop... </Feedback>
+            <Feedback> Opening stops... </Feedback>
 
             <!-- Navigate specifies the desired page or invocation destination for the Command-->
             <Navigate Target="MainPage.xaml" />
@@ -86,13 +86,13 @@
             <ListenFor> when's the next {naturalLanguage} </ListenFor>
             <ListenFor> find {naturalLanguage} </ListenFor>
             <ListenFor> {naturalLanguage} </ListenFor>
-            <Feedback> Taking the bus, is your car broken? ... </Feedback>
+            <Feedback> Taking the bus, is your car broken? </Feedback>
             <Navigate Target="MainPage.xaml" />
         </Command>
 
         <PhraseList Label="route">
             <Item>545</Item>
-            <Item>545 redmond</Item>
+            <Item>545 to Redmond</Item>
         </PhraseList>
 
         <PhraseList Label="stop">
