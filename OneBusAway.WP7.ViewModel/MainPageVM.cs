@@ -113,6 +113,22 @@ namespace OneBusAway.WP7.ViewModel
         #endregion
 
         #region Public Methods
+        
+
+        public void RegisterOnCombinedUpdatedCallback(Action<IList<Route>, IList<Stop>> callback)
+        {
+            busServiceModel.CombinedInfoForLocation_Completed += (sender, args) => callback(args.routes, args.stops);
+        }
+
+        public void RegisterOnRoutesUpdatedCallback(Action<IList<Route>> callback)
+        {
+            busServiceModel.RoutesForLocation_Completed += (sender, args) => callback(args.routes);
+        }
+
+        public void RegisterOnStopsUpdatedCallback(Action<List<Stop>> callback)
+        {
+            busServiceModel.StopsForLocation_Completed += (sender, args) => callback(args.stops);
+        }
 
         public void LoadInfoForLocation()
         {

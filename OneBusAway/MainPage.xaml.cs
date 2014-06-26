@@ -15,14 +15,18 @@
 using System;
 using System.Collections.Generic;
 using System.Device.Location;
+using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Navigation;
+using Windows.Phone.Speech.VoiceCommands;
 using Microsoft.Phone.Controls;
 using Microsoft.Phone.Controls.Maps;
 using Microsoft.Phone.Controls.Maps.Core;
@@ -196,9 +200,67 @@ namespace OneBusAway.WP7.View
         {
             base.OnNavigatedTo(e);
 
+            if (e.NavigationMode == NavigationMode.New)
+            {
+                // First, we'll look for the special "voiceCommandName" key in the QueryString arguments. If it's
+                // present, the application was activated with Voice Commands, and we'll take action based on the name
+                // of the command that was triggered.
+                string voiceCommandName;
+
+                if (NavigationContext.QueryString.TryGetValue("voiceCommandName", out voiceCommandName))
+                {
+                    HandleVoiceCommand(voiceCommandName);
+                }
+                else
+                {
+                    // If we just freshly launched this app without a Voice Command, asynchronously try to install the 
+                    // Voice Commands.
+                    // If the commands are already installed, no action will be taken--there's no need to check.
+                    Task.Run(() => InstallVoiceCommands());
+                }
+            }
+            else
+            {
+                // If we're returning to the page (e.g. from suspending in the middle of anything), restore our state
+                // back to acceptance of input.
+                //SetSearchState(SearchState.ReadyForInput);
+            }
+
             viewModel.RegisterEventHandlers(Dispatcher);
 
             navigatedAway = false;
+        }
+
+        private void HandleVoiceCommand(string voiceCommandName)
+        {
+            switch (voiceCommandName)
+            {
+                case "favorites":
+                    PC.SelectedIndex = (int)MainPagePivots.Favorites;
+                    PhoneApplicationService.Current.State["MainPageSelectedPivot"] = MainPagePivots.Favorites;
+                    break;
+                case "routes":
+                    PC.SelectedIndex = (int)MainPagePivots.Routes;
+                    PhoneApplicationService.Current.State["MainPageSelectedPivot"] = MainPagePivots.Routes;
+
+                    if (NavigationContext.QueryString.ContainsKey("route"))
+                        ProcessSearch(NavigationContext.QueryString["route"]);
+
+                    break;
+                case "stops":
+                    PC.SelectedIndex = (int)MainPagePivots.Stops;
+                    PhoneApplicationService.Current.State["MainPageSelectedPivot"] = MainPagePivots.Stops;
+                    break;
+                case "recent":
+                    PC.SelectedIndex = (int)MainPagePivots.Recents;
+                    PhoneApplicationService.Current.State["MainPageSelectedPivot"] = MainPagePivots.Recents;
+                    break;
+                case "NaturalLanguage":
+                    ProcessSearch(NavigationContext.QueryString["naturalLanguage"]);
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
         }
 
         protected override void OnNavigatedFrom(System.Windows.Navigation.NavigationEventArgs e)
@@ -310,6 +372,52 @@ namespace OneBusAway.WP7.View
                     Navigate(new Uri("/StopsMapPage.xaml", UriKind.Relative));
                 });
             }
+        }
+
+        /// <summary>
+        /// Installs the Voice Command Definition (VCD) file associated with the application.
+        /// Based on OS version, installs a separate document based on version 1.0 of the schema or version 1.1.
+        /// </summary>
+        private async void InstallVoiceCommands()
+        {
+            const string wp80VcdPath = "ms-appx:///VoiceCommandDefinition_8.0.xml";
+            const string wp81VcdPath = "ms-appx:///VoiceCommandDefinition_8.1.xml";
+
+            //try
+            //{
+            bool using81OrAbove = ((Environment.OSVersion.Version.Major >= 8)
+                && (Environment.OSVersion.Version.Minor >= 10));
+
+            bool using8OrAbove = (Environment.OSVersion.Version.Major >= 8);
+
+            var vcdUri = new Uri(using81OrAbove ? wp81VcdPath : wp80VcdPath);
+
+            if (using8OrAbove)
+            {
+                await VoiceCommandService.InstallCommandSetsFromFileAsync(vcdUri);
+
+                viewModel.RegisterOnCombinedUpdatedCallback((routes, stops) =>
+                {
+                    if (VoiceCommandService.InstalledCommandSets.ContainsKey("englishCommands"))
+                    {
+                        VoiceCommandService.InstalledCommandSets["englishCommands"].UpdatePhraseListAsync("route",
+                            routes.Select(r => r.shortName));
+                        VoiceCommandService.InstalledCommandSets["englishCommands"].UpdatePhraseListAsync("stop",
+                            stops.Select(s => s.name));
+                    }
+                });
+            }
+
+            //VoiceCommandService.InstalledCommandSets.Values.First().UpdatePhraseListAsync()
+            //}
+            //catch (Exception vcdEx)
+            //{
+            //    Dispatcher.BeginInvoke(() =>
+            //    {
+            //        //MessageBox.Show(String.Format(
+            //        //    AppResources.VoiceCommandInstallErrorTemplate, vcdEx.HResult, vcdEx.Message));
+            //    });
+            //}
         }
 
         #endregion
