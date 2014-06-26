@@ -307,6 +307,8 @@
     <Content Include="Images\CenterIcon.png" />
     <Content Include="SplashImage.png" />
     <Content Include="SplashScreenImage.jpg" />
+    <Content Include="VoiceCommandDefinition_8.0.xml" />
+    <Content Include="VoiceCommandDefinition_8.1.xml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OneBusAway.WP7.Model\OneBusAway.WP7.Model.csproj">

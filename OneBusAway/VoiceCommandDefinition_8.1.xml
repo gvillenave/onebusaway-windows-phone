@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Be sure to use the new v1.1 namespace to utilize the new PhraseTopic feature -->
+<VoiceCommands xmlns="http://schemas.microsoft.com/voicecommands/1.1">
+    <!-- The CommandSet Name is used to programmatically access the CommandSet -->
+    <CommandSet xml:lang="en-us" Name="englishCommands">
+        <!-- The CommandPrefix provides an alternative to your full app name for invocation -->
+        <CommandPrefix>One Bus Away</CommandPrefix>
+        <!-- The CommandSet Example appears in the global help alongside your app name -->
+        <Example> routes near me </Example>
+
+        <Command Name="favorites">
+            <!-- The Command example appears in the drill-down help page for your app -->
+            <Example> show my favorites </Example>
+
+            <!-- ListenFor elements provide ways to say the command, including references to 
+            {PhraseLists} and {PhraseTopics} as well as [optional] words -->
+            <ListenFor> favorities </ListenFor>
+            <ListenFor> favorite </ListenFor>
+            <ListenFor> show my favorites </ListenFor>
+
+          <!--Feedback provides the displayed and spoken text when your command is triggered -->
+            <Feedback> Opening your favorites... </Feedback>
+
+            <!-- Navigate specifies the desired page or invocation destination for the Command-->
+            <Navigate Target="MainPage.xaml" />
+        </Command>
+
+        <Command Name="recent">
+            <!-- The Command example appears in the drill-down help page for your app -->
+            <Example> show recent </Example>
+
+            <!-- ListenFor elements provide ways to say the command, including references to 
+            {PhraseLists} and {PhraseTopics} as well as [optional] words -->
+            <ListenFor> recent </ListenFor>
+            <ListenFor> show recent </ListenFor>
+
+          <!--Feedback provides the displayed and spoken text when your command is triggered -->
+            <Feedback> Opening recent... </Feedback>
+
+            <!-- Navigate specifies the desired page or invocation destination for the Command-->
+            <Navigate Target="MainPage.xaml" />
+        </Command>
+
+        <Command Name="routes">
+            <!-- The Command example appears in the drill-down help page for your app -->
+            <Example> show routes near me </Example>
+
+            <!-- ListenFor elements provide ways to say the command, including references to 
+            {PhraseLists} and {PhraseTopics} as well as [optional] words -->
+            <ListenFor> [show] routes near me </ListenFor>
+            <ListenFor> when is the next {route} [bus] </ListenFor>
+            <ListenFor> when's the next {route} [bus] </ListenFor>
+            <ListenFor> show me route {route} </ListenFor>
+            <ListenFor> route {route} </ListenFor>
+            <ListenFor> {route} </ListenFor>
+
+          <!--Feedback provides the displayed and spoken text when your command is triggered -->
+            <Feedback> Opening routes... </Feedback>
+
+            <!-- Navigate specifies the desired page or invocation destination for the Command-->
+            <Navigate Target="MainPage.xaml" />
+        </Command>
+
+        <Command Name="stops">
+            <!-- The Command example appears in the drill-down help page for your app -->
+            <Example> show stops near me </Example>
+
+            <!-- ListenFor elements provide ways to say the command, including references to 
+            {PhraseLists} and {PhraseTopics} as well as [optional] words -->
+            <ListenFor> [show] stops </ListenFor>
+            <ListenFor> [show] stops near me </ListenFor>
+            <ListenFor> [show] stops nearby </ListenFor>
+            <ListenFor> stop {stop} </ListenFor>
+
+          <!--Feedback provides the displayed and spoken text when your command is triggered -->
+            <Feedback> Opening stop... </Feedback>
+
+            <!-- Navigate specifies the desired page or invocation destination for the Command-->
+            <Navigate Target="MainPage.xaml" />
+        </Command>
+
+        <Command Name="NaturalLanguage">
+            <Example> When is the next 545? </Example>
+            <ListenFor> when is the next {naturalLanguage} </ListenFor>
+            <ListenFor> when's the next {naturalLanguage} </ListenFor>
+            <ListenFor> find {naturalLanguage} </ListenFor>
+            <ListenFor> {naturalLanguage} </ListenFor>
+            <Feedback> Taking the bus, is your car broken? ... </Feedback>
+            <Navigate Target="MainPage.xaml" />
+        </Command>
+
+        <PhraseList Label="route">
+            <Item>545</Item>
+            <Item>545 redmond</Item>
+        </PhraseList>
+
+        <PhraseList Label="stop">
+        </PhraseList>
+
+        <PhraseTopic Label="naturalLanguage" Scenario="Natural Language">
+            <Subject> Bus stops </Subject>
+        </PhraseTopic>
+
+    </CommandSet>
+</VoiceCommands>
